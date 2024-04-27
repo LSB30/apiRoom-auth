@@ -1,18 +1,10 @@
 import Express from "express";
+import { SubjectService } from "../services/SubjectServices";
 
 export class SubjectController {
-  async create(req: Express.Request, res: Express.Response) {
-    const { name } = req.body;
+  async execute(req: Express.Request, res: Express.Response) {
+    const subjectService = new SubjectService();
 
-    if (!name) {
-      return res.status(400).json({ message: "O nome é obrigatório" });
-    }
-
-    try {
-        
-    } catch (error) {
-      console.log(error);
-      return res.status(500).json({ message: "Internal Server Error" });
-    }
+    subjectService.create(req.body, req, res);
   }
 }
