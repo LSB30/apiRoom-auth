@@ -1,6 +1,7 @@
 import { z, ZodError } from "zod";
-import { subjectRepository } from "../repositories/subjectRepository";
+import { subjectRepository } from "../../repositories/subjectRepository";
 import Express from "express";
+
 const subjectSchema = z.object({
   name: z
     .string({
@@ -11,7 +12,13 @@ const subjectSchema = z.object({
       message: "O nome precisa de 3 caracteres",
     })
     .trim()
-    .transform((name) => name.toLocaleUpperCase()),
+    .transform((name) => name.toLocaleUpperCase())
+    .refine((name) => name.trim() !== "", {
+      message: "O campo nome não pode ser apenas espaços em branco",
+    })
+    .refine((name) => !/\s/.test(name), {
+      message: "O campo nome não pode conter espaços no meio",
+    }),
 });
 
 type Subject = z.infer<typeof subjectSchema>;
@@ -22,15 +29,11 @@ interface ValidationError {
 }
 
 export class SubjectService {
-  async create(subject: Subject, req: Express.Request, res: Express.Response) {
+  async create(subject: Subject, res: Express.Response) {
     try {
-      const result = subjectSchema.safeParse(subject);
+      
       const { name } = subjectSchema.parse(subject);
 
-      if (!result.success) {
-        console.log("aqui", result.error.errors);
-        return res.status(400).json(result.error.errors);
-      }
       const newSubject = subjectRepository.create({ name });
 
       await subjectRepository.save(newSubject);
@@ -43,6 +46,7 @@ export class SubjectService {
       });
     } catch (error) {
       console.log(error);
+
       if (error instanceof ZodError) {
         const validationError: ValidationError[] = error.errors.map((err) => ({
           message: err.message,
