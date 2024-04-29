@@ -3,6 +3,6 @@ import { Router } from "express";
 
 const routes = Router();
 
-routes.post("room",)
+routes.post("/room/:idRoom/create",)
 
 export default routes;

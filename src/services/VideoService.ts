@@ -1,6 +1,7 @@
 import { z, ZodError } from "zod";
 import Express from "express";
 import { videoRepository } from "../repositories/videoRepository";
+import { roomRepository } from "../repositories/roomRepository";
 
 const VideoSchema = z.object({
   title: z
@@ -28,7 +29,7 @@ const VideoSchema = z.object({
       message: "O campo url não pode conter espaços no meio",
     }),
 
-  room_id: z.number({
+  idRoom: z.number({
     required_error: "O id é obrigatório",
     invalid_type_error: "O campo deve ser um number",
   }),
@@ -43,10 +44,18 @@ interface ValidationError {
 
 export class VideoService {
   async create(req: Express.Request, res: Express.Response) {
-    try {
-      const { title, url, room_id }: Video = VideoSchema.parse(req.body);
+    const { title, url, idRoom }: Video = VideoSchema.parse(req.body);
 
-      const newVideo = videoRepository.create({ title, url, id: room_id });
+    try {
+      const room = await roomRepository.findOneBy({
+        id: idRoom,
+      });
+
+      if (!room) {
+        return res.status(404).json({ message: "Sala não existe" });
+      }
+
+      const newVideo = videoRepository.create({ title, url, room });
 
       await videoRepository.save(newVideo);
 
@@ -55,7 +64,6 @@ export class VideoService {
       return res
         .status(201)
         .json({ message: "Video criado com sucesso", Video: newVideo });
-        
     } catch (error) {
       if (error instanceof ZodError) {
         const validationError: ValidationError[] = error.errors.map((err) => ({

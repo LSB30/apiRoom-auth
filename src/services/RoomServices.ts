@@ -44,9 +44,9 @@ interface ValidationError {
 
 export class RoomServices {
   async create(req: Request, res: Response) {
-    try {
-      const { name, description } = roomSchema.parse(req.body);
+    const { name, description } = roomSchema.parse(req.body);
 
+    try {
       const newRoom = roomRepository.create({ name, description });
 
       await roomRepository.save(newRoom);
