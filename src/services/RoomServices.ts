@@ -1,8 +1,7 @@
 import { z, ZodError } from "zod";
-import { subjectRepository } from "../../repositories/subjectRepository";
-import Express from "express";
-
-const subjectSchema = z.object({
+import { Response, Request } from "express";
+import { roomRepository } from "../repositories/roomRepository";
+const roomSchema = z.object({
   name: z
     .string({
       required_error: "O nome é obrigatório",
@@ -19,34 +18,42 @@ const subjectSchema = z.object({
     .refine((name) => !/\s/.test(name), {
       message: "O campo nome não pode conter espaços no meio",
     }),
+
+  description: z
+    .string({
+      required_error: "Description é obrigatório",
+      invalid_type_error: "O campo deve ser uma string",
+    })
+    .min(3, {
+      message: "O campo precisa de 3 caracteres",
+    })
+    .trim()
+    .transform((description) => description.toLocaleUpperCase())
+    .refine((description) => description.trim() !== "", {
+      message: "O campo description não pode ser apenas espaços em branco",
+    }),
 });
 
-type Subject = z.infer<typeof subjectSchema>;
+type Room = z.infer<typeof roomSchema>;
 
 interface ValidationError {
   message: string; // Mensagem de erro
   path: (string | number)[]; // Caminho do campo que causou o erro
 }
 
-export class SubjectService {
-  async create(subject: Subject, res: Express.Response) {
+export class RoomServices {
+  async create(req: Request, res: Response) {
     try {
-      
-      const { name } = subjectSchema.parse(subject);
+      const { name, description } = roomSchema.parse(req.body);
 
-      const newSubject = subjectRepository.create({ name });
+      const newRoom = roomRepository.create({ name, description });
 
-      await subjectRepository.save(newSubject);
+      await roomRepository.save(newRoom);
 
-      console.log(newSubject);
-
-      return res.status(201).json({
-        message: "Disciplina criada com sucesso",
-        Disciplina: newSubject,
-      });
+      return res
+        .status(201)
+        .json({ message: "Sala criada com sucesso", sala: newRoom });
     } catch (error) {
-      console.log(error);
-
       if (error instanceof ZodError) {
         const validationError: ValidationError[] = error.errors.map((err) => ({
           message: err.message,
