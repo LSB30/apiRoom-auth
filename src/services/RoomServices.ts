@@ -1,6 +1,7 @@
 import { z, ZodError } from "zod";
 import { Response, Request } from "express";
 import { roomRepository } from "../repositories/roomRepository";
+
 const roomSchema = z.object({
   name: z
     .string({

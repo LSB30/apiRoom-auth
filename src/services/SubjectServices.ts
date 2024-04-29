@@ -31,7 +31,7 @@ interface ValidationError {
 export class SubjectService {
   async create(req: Express.Request, res: Express.Response) {
     try {
-      const { name } = subjectSchema.parse(req.body);
+      const { name } : Subject = subjectSchema.parse(req.body);
 
       const newSubject = subjectRepository.create({ name });
 
